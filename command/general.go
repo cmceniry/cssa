@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"github.com/cmceniry/cssa/stash"
+	"strings"
 )
 
 type GeneralOptions struct {
@@ -14,6 +15,8 @@ type GeneralOptions struct {
 	CstarConfigfile	string
 	CassandraConfigFile	string
 	Stash		stash.Stash
+	Exclude		[]string
+	RemoveExclude	bool
 }
 
 var Commands = map[string]func(*GeneralOptions, []string){
@@ -39,6 +42,7 @@ func ParseConfigFile(filename string) (*GeneralOptions, error) {
 	ret := &GeneralOptions{
 		CssaConfigfile: filename,
 		ConfigFile: filename,
+		RemoveExclude: true,
 	}
 	if val, ok := d["cassandraconfig"]; ok {
 		if v, ok := val.(string); ok {
@@ -67,7 +71,29 @@ func ParseConfigFile(filename string) (*GeneralOptions, error) {
 			return nil, fmt.Errorf("Invalid Config: stash: %s(%T)\n", val, val)
 		}
 	}
-
+	if val, ok := d["exclude"]; ok {
+		if v, ok := val.([]interface{}); ok {
+			ret.Exclude = []string{}
+			for _, entry := range v {
+				if e, ok := entry.(string); ok {
+					ret.Exclude = append(ret.Exclude, e)
+				} else {
+					return nil, fmt.Errorf("Invalid Config: exclude entry: %s\n", e)
+				}
+			}
+		} else {
+			return nil, fmt.Errorf("Invalid Config: exclude: %s(%T)\n", val, val)
+		}
+	}
 
 	return ret, nil
+}
+
+func IsExcluded(opts *GeneralOptions, filename string) bool {
+	for _, e := range opts.Exclude {
+		if strings.HasPrefix(filename, e) {
+			return true
+		}
+	}
+	return false
 }

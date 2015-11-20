@@ -26,6 +26,9 @@ func SizeSummary(opts *GeneralOptions, args []string) {
 			os.Exit(-2)
 		}
 		for _, filename := range a.GetFilelist() {
+			if IsExcluded(opts, filename) {
+				continue
+			}
 			if _, ok := seen[filename]; !ok {
 				seen[filename] = []string{}
 			}
@@ -53,7 +56,8 @@ func SizeSummary(opts *GeneralOptions, args []string) {
 	}
 	fmt.Printf("%s\n", header)
 
-	for archivename, vals := range total {
+	for _, archivename := range args {
+		vals := total[archivename]
 		line := fmt.Sprintf("%-30s\t", archivename)
 		for _, v := range vals {
 			line += fmt.Sprintf("%-14d", v)
