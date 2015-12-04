@@ -7,6 +7,8 @@ import (
 )
 
 func List(opts *GeneralOptions, args []string) {
+	opts.Stash.Load()
+
 	s := opts.Stash
 
 	archivenames := s.GetArchivelist()

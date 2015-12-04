@@ -17,6 +17,9 @@ type Archive interface {
 
 type Stash interface {
 	//AddFile(
+	Load() error
+	IsLoaded() bool
+	CreateNew() error
 	CreateArchive(string) Archive
 	GetArchive(string) Archive
 	GetArchivelist() []string

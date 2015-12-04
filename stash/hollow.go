@@ -32,38 +32,16 @@ type HollowFile struct {
 
 type HollowStash struct {
 	InventoryFile	string
+	Loaded		bool	`yaml:"-"`
 	Files		map[string]*HollowFile
 	Archives	map[string]*HollowArchive
-}
-
-func CreateHollowStash(filename string) (*HollowStash, error) {
-	r := &HollowStash{InventoryFile: filename}
-	m, err := yaml.Marshal(*r)
-	if err != nil {
-		return nil, err
-	}
-	f, err := os.Open(filename)
-	if os.IsNotExist(err) {
-		f, err = os.Create(filename)
-		if err != nil {
-			return nil, err
-		}
-		f.Write(m)
-		f.Close()
-	} else if err != nil {
-		return nil, err
-	} else {
-		f.Close()
-		return nil, os.ErrExist
-	}
-	return r, nil
 }
 
 func NewHollowStashFromConfig(c map[string]interface{}) (*HollowStash, error) {
 	if filenameintf, ok := c["inventoryfile"]; ok {
 		if filename, ok := filenameintf.(string); ok {
-			r, err := NewHollowStash(filename)
-			return r, err
+			r := NewHollowStash(filename)
+			return r, nil
 		} else {
 			return nil, fmt.Errorf("Invalid inventoryname: %s(%T)", filenameintf, filenameintf)
 		}
@@ -72,34 +50,72 @@ func NewHollowStashFromConfig(c map[string]interface{}) (*HollowStash, error) {
 	}
 }
 
-func NewHollowStash(filename string) (*HollowStash, error) {
-	r := &HollowStash{}
-	f, err := os.Open(filename)
+func NewHollowStash(filename string) (*HollowStash) {
+	return &HollowStash{InventoryFile: filename}
+}
+
+func (s *HollowStash) Load() error {
+	if s.Loaded {
+		return fmt.Errorf("Already Loaded")
+	}
+	f, err := os.Open(s.InventoryFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer f.Close()
 	y, err := ioutil.ReadAll(f)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	r := &HollowStash{}
 	err = yaml.Unmarshal(y, r)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if r.Files == nil {
-		r.Files = make(map[string]*HollowFile)
+	if r.Files != nil {
+		s.Files = r.Files
+	} else {
+		s.Files = make(map[string]*HollowFile)
 	}
-	if r.Archives == nil {
-		r.Archives = make(map[string]*HollowArchive)
+	if r.Archives != nil {
+		s.Archives = r.Archives
+	} else {
+		s.Archives = make(map[string]*HollowArchive)
 	}
-	for _, f := range r.Files {
-		f.Parent = r
+	for _, f := range s.Files {
+		f.Parent = s
 	}
-	for _, a := range r.Archives {
-		a.Parent = r
+	for _, a := range s.Archives {
+		a.Parent = s
 	}
-	return r, nil
+	s.Loaded = true
+	return nil
+}
+
+func (s *HollowStash) IsLoaded() bool {
+	return false
+}
+
+func (s *HollowStash) CreateNew() error {
+	m, err := yaml.Marshal(*s)
+	if err != nil {
+		return err
+	}
+	f, err := os.Open(s.InventoryFile)
+	if os.IsNotExist(err) {
+		f, err = os.Create(s.InventoryFile)
+		if err != nil {
+			return err
+		}
+		f.Write(m)
+		f.Close()
+	} else if err != nil {
+		return err
+	} else {
+		f.Close()
+		return os.ErrExist
+	}
+	return nil
 }
 
 func (s *HollowStash) AddFile(newfile *HollowFile) error {

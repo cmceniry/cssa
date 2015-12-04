@@ -6,6 +6,8 @@ import (
 )
 
 func Size(opts *GeneralOptions, args []string) {
+	opts.Stash.Load()
+
 	if len(args) < 1 {
 		fmt.Printf("No archive name identified\n")
 		os.Exit(-2)

@@ -10,6 +10,8 @@ import (
 )
 
 func Archive(opts *GeneralOptions, args []string) {
+	opts.Stash.Load()
+
 	archiveFlags := flag.NewFlagSet("archive", flag.ExitOnError)
 	archiveFlags.Parse(args)
 	if len(archiveFlags.Args()) < 1 {
