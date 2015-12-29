@@ -1,7 +1,9 @@
 package stash
 
 import (
+	yaml "gopkg.in/yaml.v2"
 	"github.com/cmceniry/cssa/util"
+	"path/filepath"
 	"fmt"
 	"os"
 )
@@ -122,6 +124,17 @@ func (s *DirStash) CreateNew() error {
 	}
 
 	// Now, we know we have a directory we can work with, and it's empty
+	err = os.Mkdir(filepath.Join(s.InventoryDir, "files"), 0755)
+	m, err := yaml.Marshal(*s)
+	if err != nil {
+		return err
+	}
+	f, err = os.Create(filepath.Join(s.InventoryDir, "manifest"))
+	if err != nil {
+		return err
+	}
+	f.Write(m)
+	f.Close()
 	return nil
 }
 
