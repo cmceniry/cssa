@@ -93,7 +93,7 @@ func (s *HollowStash) Load() error {
 }
 
 func (s *HollowStash) IsLoaded() bool {
-	return false
+	return s.Loaded
 }
 
 func (s *HollowStash) CreateNew() error {
