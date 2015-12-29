@@ -41,6 +41,9 @@ func ParseConfig(c map[string]interface{}) (Stash, error) {
 	case "hollow":
 		s, err := NewHollowStashFromConfig(c)
 		return s, err
+	case "directory":
+		s, err := NewDirStashFromConfig(c)
+		return s, err
 	default:
 		return nil, fmt.Errorf("Unknown stash type: %s", v)
 	}
